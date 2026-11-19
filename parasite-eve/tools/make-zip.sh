@@ -21,6 +21,7 @@ for f in various.bin menus.bin font.tim mainmenu.bin names.tim map.bin; do
     cp "$paq/$f" "$stage/"
 done
 luajit "$here/tools/extract-hacks.lua" "$hack" "$stage/slus-hacks.lua"
+mkdir -p "$(dirname "$out")"
 out=$(cd "$(dirname "$out")" && pwd)/$(basename "$out")
 rm -f "$out"
 (cd "$stage" && zip -qr "$out" .)
