@@ -34,7 +34,7 @@ local function pad4(n)
     return n + (4 - n % 4) % 4
 end
 
-PE.u16, PE.u32, PE.w32 = u16, u32, w32
+PE.u16, PE.u32, PE.w32, PE.pad4 = u16, u32, w32, pad4
 
 -- Executable offsets of the tables locating everything inside PE.IMG.
 PE.SLUS = { ['SLUS_006.62;1'] = 1, ['SLUS_006.68;1'] = 2 }
@@ -106,10 +106,10 @@ Disc.__index = Disc
 
 function PE.open(iso)
     local reader = iso:createReader()
-    local slus, cd
+    local slus, cd, slusName
     for name, n in pairs(PE.SLUS) do
         local f = reader:open(name)
-        if not f:failed() then slus, cd = f, n break end
+        if not f:failed() then slus, cd, slusName = f, n, name:gsub(';1$', '') break end
         f:close()
     end
     if not slus then return nil, 'not a Parasite Eve (USA) disc' end
@@ -117,6 +117,7 @@ function PE.open(iso)
     if img:failed() then return nil, 'PE.IMG not found' end
     local self = setmetatable({ iso = iso, cd = cd, slus = tostring(slus:read(slus:size())), img = img }, Disc)
     slus:close()
+    self.slusName, self.imgSectors = slusName, img:size() / 2048
     self.rooms = {}
     for i = 1, PE.ROOM_COUNT do
         local o = PE.ROOM_TABLE + (i - 1) * 8
