@@ -2,7 +2,7 @@
 -- Parasite Eve (USA) disc loaded, then use the "Parasite Eve" window.
 
 -- require() does not search mounted archives; route this example's modules there.
-for _, m in ipairs { 'pe', 'pe-groups', 'pe-build' } do
+for _, m in ipairs { 'pe', 'pe-groups', 'pe-build', 'pe-pack' } do
     package.preload[m] = function() return Support.extra.dofile(m .. '.lua') end
 end
 
@@ -86,7 +86,8 @@ local function buildDisc(path)
     for g, s in pairs(state.scripts) do scripts[g] = s.bytes end
     local out = Support.File.open(path, 'TRUNCATE')
     if out:failed() then return 'cannot write ' .. path end
-    local ok, err = require('pe-build').build(state.disc, out, scripts)
+    local files, hacks = require('pe-pack').load(state.disc, readArchived)
+    local ok, err = require('pe-build').build(state.disc, out, scripts, files, hacks)
     out:close()
     if not ok then return 'build failed: ' .. tostring(err) end
     local name = path:match('[^/\\]+$')

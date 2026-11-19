@@ -59,8 +59,9 @@ end
 -- Lay PE.IMG out again. scripts[g] replaces script g in every room using it,
 -- files[i] replaces misc file i. Returns the new PE.IMG as a File, and the
 -- executable with its tables rewritten.
-function B.layoutImage(disc, scripts, files)
+function B.layoutImage(disc, scripts, files, hacks)
     local slus, img = disc.slus, disc.img
+    for offset, bytes in pairs(hacks or {}) do slus = splice(slus, offset, bytes) end
     local misc = {}
     for i = 1, MISC_COUNT do misc[i] = u16(slus, MISC_TABLE + (i - 1) * 2) end
     local songEnd = u16(slus, MUSIC_TABLE + (MUSIC_COUNT - 1) * 2)
@@ -138,9 +139,9 @@ local PVD_FIELDS = {
 }
 
 -- Write the whole disc to `out` (a File opened for writing).
-function B.build(disc, out, scripts, files)
+function B.build(disc, out, scripts, files, hacks)
     local iso = disc.iso
-    local image, slus = B.layoutImage(disc, scripts or {}, files or {})
+    local image, slus = B.layoutImage(disc, scripts or {}, files or {}, hacks)
     image:rSeek(0)
     local slusFile = Support.File.buffer()
     slusFile:write(slus)
