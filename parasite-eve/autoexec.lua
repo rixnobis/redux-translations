@@ -1,6 +1,11 @@
 -- Parasite Eve translation editor. Mount this archive in PCSX-Redux with a
 -- Parasite Eve (USA) disc loaded, then use the "Parasite Eve" window.
 
+-- require() does not search mounted archives; route this example's modules there.
+for _, m in ipairs { 'pe', 'pe-groups', 'pe-build' } do
+    package.preload[m] = function() return Support.extra.dofile(m .. '.lua') end
+end
+
 local PE = require 'pe'
 
 local function readArchived(name)
