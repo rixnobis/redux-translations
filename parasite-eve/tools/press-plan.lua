@@ -1,17 +1,14 @@
 -- Test helper: press pad buttons on a schedule. PE_PLAN="50:START,62:START,66:UP,69:CROSS"
 -- (seconds since start). Used with -dofile to drive a rebuilt disc to its first room.
--- schedule: seconds since start -> button, held 0.3 s
 local pad = PCSX.SIO0.slots[1].pads[1]
 local B = PCSX.CONSTS.PAD.BUTTON
 local plan = {}
 for line in (os.getenv('PE_PLAN') or ''):gmatch('[^,]+') do
   local t, b = line:match('(%d+):(%u+)'); plan[#plan + 1] = { tonumber(t), B[b] }
 end
-local t0 = os.clock and nil
 local start = os.time()
 local prev = DrawImguiFrame
 local held, heldUntil, idx = nil, 0, 1
-local clock = 0
 function DrawImguiFrame()
   if prev then prev() end
   local now = os.time() - start
