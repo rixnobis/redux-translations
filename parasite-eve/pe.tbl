@@ -1,4 +1,4 @@
-# Parasite Eve (USA) text encoding, partial
+# Parasite Eve (USA) text encoding. Glyph = byte value, read off font.tim (12x12 cells, 21 per row).
 00=0
 01=1
 02=2
@@ -63,13 +63,39 @@
 47=x
 48=y
 49=z
+0A=+
+0C==
+0D=*
+0E=%
+2A=&
 2B=!
 2C=?
 2D="
+2E='
 2F=.
+4A=:
+4B=,
+4C=/
 4D=é
 4E=è
+4F=ê
+50=ë
 51=à
+52=â
+53=ä
+54=î
+55=ï
+56=ô
+57=ö
+58=ù
+59=û
+5A=ü
+5B=ç
+5C=Œ
+5D=œ
+5E=(
+5F=)
+60=N°
 /FE=<PT%d>
 /FF=<CLOSE>
 F7=\n
