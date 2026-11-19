@@ -1,12 +1,12 @@
 # redux-translations
 
 Translation editors for [PCSX-Redux](https://github.com/pcsx-redux/pcsx-redux),
-shipped as Lua archives. Load your own disc, then File > Add Lua archive (or
+packaged as Lua archives. Load your own disc, then File > Add Lua archive (or
 `-archive parasite-eve.zip` on the command line). The archive's `autoexec.lua`
 opens an editor window that decodes the game's text through `PCSX.TextTable`
 and writes a new `.bin`/`.cue` through `PCSX.isoBuilder`.
 
-This repository holds code only. The zips on the releases page add a finished
+There is only code in this repository. The zips on the releases page add a finished
 translation as the worked example; the disc is never included.
 
 ## Parasite Eve (USA)
