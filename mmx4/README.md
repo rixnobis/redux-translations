@@ -31,6 +31,10 @@ The size field counts bytes for an ARC, but 2336 per sector for a stream.
 - `../common/reader.lua` reads and writes little-endian numbers at byte offsets
   in strings, buffers and Redux's `LuaBuffer` and `Slice`. The others read the
   disc through it.
+- `../common/edcecc.lua` recomputes the EDC and ECC check bytes of raw Mode 2
+  sectors. Every movie the build changes goes through it before it is written,
+  because a drive that checks those bytes rejects a sector whose data no longer
+  matches them.
 - `mmx4-index.lua` is pure structure, generated from the patcher: the table's
   160 file names, which ARC gets which replacement subfile, and which movie
   gets which subtitles. It carries no translated content, so it lives here.
@@ -41,6 +45,10 @@ The size field counts bytes for an ARC, but 2336 per sector for a stream.
   a frame the subtitle index names, decodes it with `PCSX.MDEC`, alpha-blits the
   RGBA overlay at its position, and re-encodes it to fit the sectors it used.
   Audio, empty and unsubtitled frames pass through byte for byte.
+- `mmx4-intro.lua` is the credits intro that replaces the Capcom logo movie:
+  it plays the patch's timeline of still pictures and effects at 15 frames a
+  second, encodes each frame with `PCSX.MDEC`, interleaves the intro's XA
+  soundtrack, and appends `CAPCOM20.STR` with its frames renumbered.
 - `mmx4-build.lua` writes a whole new disc through `PCSX.isoBuilder`. It copies
   the disc file by file, rebuilds the four ARC archives and the subtitled
   movies, applies the executable patches, and -- once `close()` has placed every
@@ -52,8 +60,8 @@ The size field counts bytes for an ARC, but 2336 per sector for a stream.
   shape out of the original `mmx4-hack.lua`.
 
 The release zip adds the 2004 French patch (Génération IX): the font and player
-files, the executable patches, and the subtitle overlays for the nine movies.
-The disc is never included.
+files, the executable patches, the subtitle overlays for the nine movies, and
+the intro's pictures and soundtrack. The disc is never included.
 
 ## Trying it
 
@@ -72,9 +80,10 @@ Run the files through Redux, not a stock LuaJIT.
   rebuilt with the translated graphics.
 - The nine story movies (`X1_U`..`X4_U`, `Z1_U`..`Z5_U`) get French subtitles.
 - The executable's three code patches hook the text renderer.
-- `create_intro` is **not** ported: the patcher rebuilds `CAPCOM20.STR` into a
-  credits intro from loose RGB frames and a timeline; this archive copies
-  `CAPCOM20.STR` through unchanged.
+- `CAPCOM20.STR` becomes the credits intro followed by the Capcom logo, and the
+  executable's frame count for it (at `0xe2508`) is raised to match.
 - The Japanese-audio option (`videos_jap`, which swaps the movie soundtracks and
-  uses the Japanese subtitle set) is **not** ported; only the US path is
-  supported, as in the original (its Japanese path errors out).
+  uses the Japanese subtitle set) is **not** ported: none of the nine story
+  movies has as many audio sectors as its Japanese XA file holds. The
+  Japanese-disc path is not supported either, as in the original (it errors
+  out).

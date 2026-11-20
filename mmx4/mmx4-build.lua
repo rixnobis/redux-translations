@@ -1,7 +1,7 @@
 -- Rebuild a Mega Man X4 (USA) disc with the French patch, through
 -- PCSX.isoBuilder. The disc is copied file by file; the four ARC files that
 -- carry the font and player graphics are rebuilt, the nine subtitled movies
--- are replaced with the processed STRs, and the executable's lookup table is
+-- and the intro are replaced with the processed STRs, and the executable's lookup table is
 -- rewritten so each entry points at where its file actually landed.
 --
 -- The game finds its data by the hardcoded sector table, not the filesystem,
@@ -11,6 +11,7 @@
 
 local index = require 'mmx4-index'
 local reader = require 'reader'
+local edcecc = require 'edcecc'
 local u8, s8, u16, u32 = reader.u8, reader.s8, reader.u16, reader.u32
 local w32 = reader.w32
 
@@ -148,8 +149,10 @@ function B.build(disc, out, repl, hacks)
                 -- STR and XA streams keep their raw Mode 2 sectors.
                 local content
                 if i and repl[i] then
+                    -- The edited sectors carry the original check bytes (or
+                    -- none, for new ones); M2_RAW writes them as given.
                     local f = Support.File.buffer()
-                    f:write(repl[i].bytes)
+                    f:write(edcecc.stream(repl[i].bytes))
                     f:rSeek(0)
                     content = f
                 else
@@ -157,7 +160,8 @@ function B.build(disc, out, repl, hacks)
                 end
                 n = builder:createFile(parent, e.name, content)
                 n:setSectorMode('M2_RAW')
-                n:setDeclaredSize(e.size)
+                -- The directory counts 2048 bytes per sector of a stream.
+                n:setDeclaredSize((i and repl[i]) and math.floor(#repl[i].bytes / RAW) * SECTOR or e.size)
             elseif i and repl[i] then
                 local f = Support.File.buffer()
                 f:write(repl[i].bytes)

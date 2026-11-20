@@ -4,7 +4,7 @@
 
 -- Redux's require() does not search mounted archives yet, so point it at this
 -- archive's modules by hand. This goes away once it does.
-for _, m in ipairs { 'reader', 'mmx4-index', 'mmx4-disc', 'mmx4-str', 'mmx4-build' } do
+for _, m in ipairs { 'reader', 'edcecc', 'mmx4-index', 'mmx4-disc', 'mmx4-str', 'mmx4-intro', 'mmx4-build' } do
     package.preload[m] = function() return Support.extra.dofile(m .. '.lua') end
 end
 
@@ -70,6 +70,18 @@ local function prepare(disc, report)
             end
         end
         if report then report(index.names[i]) end
+    end
+
+    -- The credits intro replaces the Capcom logo movie, when INTRO/ is shipped.
+    if readArchived('INTRO/intro.xa') then
+        local intro = require 'mmx4-intro'
+        for i in pairs(index.intro) do
+            local new, frames = intro.build(disc:read(i), function(name) return readArchived('INTRO/' .. name) end)
+            repl[i] = { bytes = new, raw = true }
+            hacks[intro.EXE_FRAMES] = intro.exeFrames(frames)
+            applied[#applied + 1] = string.format('%s (intro, last frame %d)', index.names[i], frames)
+            if report then report(index.names[i]) end
+        end
     end
     return repl, hacks, applied
 end
