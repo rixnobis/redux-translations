@@ -6,7 +6,8 @@ packaged as Lua archives. Load your own disc, then File > Add Lua archive (or
 opens an editor window that decodes the game's text through `PCSX.TextTable`
 and writes a new `.bin`/`.cue` through `PCSX.isoBuilder`.
 
-There is only code in this repository. The zips on the releases page add a finished
+Each game folder has a README walking through its files, and `common/` holds the
+modules they share. There is only code in this repository. The zips on the releases page add a finished
 translation as the worked example; the disc is never included.
 
 ## Parasite Eve (USA)
