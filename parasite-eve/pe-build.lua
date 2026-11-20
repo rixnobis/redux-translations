@@ -3,18 +3,18 @@
 -- the executable's lookup tables and PE.IMG change.
 
 local PE = require 'pe'
+local reader = require 'reader'
 
 local B = {}
 
+-- Executable tables of misc files and music, as sector numbers inside PE.IMG.
 local MISC_TABLE, SONG_BASE, MUSIC_TABLE = 0x838da, 0x8397c, 0x83980
 local MISC_COUNT, MUSIC_COUNT = 80, 251
 local SECTOR = 2048
-local u16, u32 = PE.u16, PE.u32
+local u8, s8, u16, u32 = reader.u8, reader.s8, reader.u16, reader.u32
+local w16, w32 = reader.w16, reader.w32
 
-local function w16(v)
-    return string.char(v % 256, math.floor(v / 256) % 256)
-end
-
+-- Overwrite bytes of string s starting at offset pos.
 local function splice(s, pos, bytes)
     return s:sub(1, pos) .. bytes .. s:sub(pos + #bytes + 1)
 end
@@ -23,31 +23,40 @@ local function sectors(bytes)
     return math.ceil(bytes / SECTOR)
 end
 
+-- ISO9660 directory flags, and the XA attribute bits for Form 2 sectors.
+local FLAG_HIDDEN, FLAG_DIR = 0x01, 0x02
+local XA_FORM2, XA_INTERLEAVED = 0x1000, 0x2000
+
 -- ISO9660 directory records off an Iso, with the XA attribute word.
 local function readDir(iso, lba, size)
     local data = tostring(iso:open(lba, size, 'M2_FORM1'):read(size))
     local entries, pos = {}, 0
     while pos < #data do
-        local len = data:byte(pos + 1)
+        local len = u8(data, pos)
         if len == 0 then
-            pos = (math.floor(pos / SECTOR) + 1) * SECTOR
+            -- Records never cross a sector: a zero length means skip to the next one.
+            pos = pos - pos % SECTOR + SECTOR
         else
-            local nameLen = data:byte(pos + 33)
+            local nameLen = u8(data, pos + 32)
             local name = data:sub(pos + 34, pos + 33 + nameLen)
             if name ~= '\0' and name ~= '\1' then
-                local su = pos + 33 + nameLen + (nameLen + 1) % 2
+                -- The system use area follows the name, padded to an even offset.
+                local su = pos + 33 + nameLen + ((nameLen + 1) & 1)
                 local e = {
                     name = name:gsub(';1$', ''),
                     lba = u32(data, pos + 2),
                     size = u32(data, pos + 10),
-                    date = { data:byte(pos + 19, pos + 25) },
-                    flags = data:byte(pos + 26),
+                    -- Years since 1900, month, day, hour, minute, second, then the
+                    -- signed GMT offset in 15-minute steps.
+                    date = { u8(data, pos + 18), u8(data, pos + 19), u8(data, pos + 20), u8(data, pos + 21),
+                             u8(data, pos + 22), u8(data, pos + 23), s8(data, pos + 24) },
+                    flags = u8(data, pos + 25),
                 }
+                -- The XA extension: big-endian attributes, then the 'XA' signature.
                 if su + 14 <= pos + len and data:sub(su + 7, su + 8) == 'XA' then
-                    local hi, lo = data:byte(su + 5, su + 6)
-                    e.xa = hi * 256 + lo
+                    e.xa = u8(data, su + 4) << 8 | u8(data, su + 5)
                 end
-                e.isDir = e.flags % 4 >= 2
+                e.isDir = (e.flags & FLAG_DIR) ~= 0
                 entries[#entries + 1] = e
             end
             pos = pos + len
@@ -120,14 +129,14 @@ function B.layoutImage(disc, scripts, files, hacks)
     for i = 1, PE.ROOM_COUNT do
         local s = rooms[i].sizes
         assert(s[1] < 256 and s[2] < 4096 and s[3] < 4096, 'room ' .. i .. ' too large for the table')
-        local entry = PE.w32(rooms[i].sector)
-            .. string.char(s[1], s[2] % 256, math.floor(s[2] / 256) + (s[3] % 16) * 16, math.floor(s[3] / 16))
+        -- Sector, then the three part sizes packed as 8 + 12 + 12 bits (pe-disc.lua).
+        local entry = w32(rooms[i].sector) .. w32(s[1] | s[2] << 8 | s[3] << 20)
         slus = splice(slus, PE.ROOM_TABLE + (i - 1) * 8, entry)
     end
     -- The entries past the last room point at the end of the image.
     for k = 0, 10 do
         local o = PE.ROOM_TABLE + (PE.ROOM_COUNT + k) * 8
-        if u32(disc.slus, o) == disc.imgSectors then slus = splice(slus, o, PE.w32(finish)) end
+        if u32(disc.slus, o) == disc.imgSectors then slus = splice(slus, o, w32(finish)) end
     end
     return out, slus, finish
 end
@@ -166,7 +175,7 @@ function B.build(disc, out, scripts, files, hacks)
                 node = builder:createFile(parent, e.name, slusFile)
             elseif e.name == 'PE.IMG' and parent == disc.buildRoot then
                 node = builder:createFile(parent, e.name, image)
-            elseif e.xa and (e.xa % 8192 >= 4096 or e.xa % 16384 >= 8192) then
+            elseif e.xa and (e.xa & (XA_FORM2 | XA_INTERLEAVED)) ~= 0 then
                 -- Form 2 streams (STR, XA) go across with their subheaders.
                 node = builder:createFile(parent, e.name, iso:open(e.lba, sectors(e.size) * 2336, 'M2_RAW'))
                 node:setSectorMode('M2_RAW')
@@ -175,9 +184,8 @@ function B.build(disc, out, scripts, files, hacks)
                 node = builder:createFile(parent, e.name, iso:open(e.lba, e.size, 'M2_FORM1'))
             end
             if e.xa then node:setXAAttribs(e.xa) end
-            if e.flags % 2 == 1 then node:setHidden(true) end
-            local d = e.date
-            node:setDate(d[1], d[2], d[3], d[4], d[5], d[6], d[7] >= 128 and d[7] - 256 or d[7])
+            if (e.flags & FLAG_HIDDEN) ~= 0 then node:setHidden(true) end
+            node:setDate(unpack(e.date))
         end
     end
     local root = builder:createRoot(sectors(rootSize))

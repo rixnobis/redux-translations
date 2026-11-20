@@ -3,17 +3,20 @@
 -- a file's bytes from the pack, or nil.
 
 local PE = require 'pe'
-local u32, w32, pad4 = PE.u32, PE.w32, PE.pad4
+local reader = require 'reader'
+local u16, u32, w32, pad4 = reader.u16, reader.u32, reader.w32, PE.pad4
 
 local P = {}
 
+-- Executable offsets: the misc file table (sector numbers inside PE.IMG, one
+-- 16-bit word per file) and the font's glyph width table (one byte per glyph).
 local MISC_TABLE = 0x838da
 local WIDTHS = 0x81ea1
 
 -- Bytes of misc file i (1..79) as the original disc holds it.
 function P.miscFile(disc, i)
-    local a = PE.u16(disc.slus, MISC_TABLE + (i - 1) * 2)
-    local b = PE.u16(disc.slus, MISC_TABLE + i * 2)
+    local a = u16(disc.slus, MISC_TABLE + (i - 1) * 2)
+    local b = u16(disc.slus, MISC_TABLE + i * 2)
     return tostring(disc.img:readAt((b - a) * 2048, a * 2048))
 end
 
@@ -25,7 +28,8 @@ local function menus(bytes, widths)
     for i = 78, 144 do
         local v = widths:byte(i)
         if not v or v == 0 then break end
-        t[#t + 1] = { o + i - 1, string.char((v - 1) * 16 % 256) }
+        -- The menu table stores the advance in the high nibble.
+        t[#t + 1] = { o + i - 1, string.char(((v - 1) << 4) & 0xff) }
     end
     for _, p in ipairs(t) do bytes = bytes:sub(1, p[1]) .. p[2] .. bytes:sub(p[1] + 2) end
     return bytes

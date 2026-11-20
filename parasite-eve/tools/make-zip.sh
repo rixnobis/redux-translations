@@ -14,8 +14,8 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 mkdir "$stage/scripts"
-cp "$here"/autoexec.lua "$here"/pe.lua "$here"/pe-groups.lua "$here"/pe-build.lua \
-   "$here"/pe-pack.lua "$here"/pe.tbl "$stage/"
+cp "$here"/autoexec.lua "$here"/pe.lua "$here"/pe-groups.lua "$here"/pe-disc.lua \
+   "$here"/pe-build.lua "$here"/pe-pack.lua "$here"/pe.tbl "$here"/../common/reader.lua "$stage/"
 cp "$paq"/scripts/*.bin "$stage/scripts/"
 for f in various.bin menus.bin font.tim mainmenu.bin names.tim map.bin; do
     cp "$paq/$f" "$stage/"
