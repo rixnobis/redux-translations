@@ -36,6 +36,9 @@ local arr = ffi.new('uint8_t[4]', 1, 2, 3, 4)
 eq('ffi array', r.u32(arr, 0), 0x04030201)
 errors('ffi array past the end', r.u16, arr, 3)
 eq('ffi pointer', r.u16(ffi.cast('uint8_t *', arr) + 1, 0), 0x0302)
+local big = ffi.new('uint8_t[16]')
+big[12] = 7
+eq('pointer to an array is not bounded by the pointer size', r.u8(ffi.cast('uint8_t (*)[16]', big), 12), 7)
 
 local f = Support.File.buffer()
 f:write(s)

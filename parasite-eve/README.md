@@ -49,7 +49,8 @@ text means moving that data and fixing every pointer that crosses the script.
 ## Trying it
 
 Mount the zip from the releases page with a Parasite Eve (USA) disc loaded,
-press "Scan disc", pick a script and edit it. The same functions are reachable
+press "Scan disc", pick a script and edit it, then press "Apply" under the
+text so the edit is kept, and "Build disc" to write the new image. The same functions are reachable
 from the Lua console through the `ParasiteEve` global, for example
 `ParasiteEve.scan()` then `ParasiteEve.build('/tmp/pe.bin')`.
 

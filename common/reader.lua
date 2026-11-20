@@ -37,7 +37,9 @@ function reader.bytes(data)
     if t == 'cdata' then
         if hasLuaBuffer and ffi.istype(LuaBuffer, data) then return ffi.cast(bytePtr, data.data), data.size end
         -- An array knows its size; a pointer does not (sizeof would give the pointer's own).
-        if tostring(ffi.typeof(data)):match('%*>$') then return ffi.cast(bytePtr, data), nil end
+        -- Pointer types print as `T *` or, for a pointer to an array, `T (*)[N]`.
+        local name = tostring(ffi.typeof(data))
+        if name:match('%*>$') or name:find('(*)', 1, true) then return ffi.cast(bytePtr, data), nil end
         return ffi.cast(bytePtr, data), ffi.sizeof(data)
     end
     error('reader: cannot read from a ' .. t, 2)
