@@ -1,12 +1,14 @@
 -- Parasite Eve translation editor. Mount this archive in PCSX-Redux with a
 -- Parasite Eve (USA) disc loaded, then use the "Parasite Eve" window.
 
--- require() does not search mounted archives; route this example's modules there.
-for _, m in ipairs { 'pe', 'pe-groups', 'pe-build', 'pe-pack' } do
+-- Redux's require() does not search mounted archives yet, so point it at this
+-- archive's modules by hand. This goes away once it does.
+for _, m in ipairs { 'reader', 'pe', 'pe-groups', 'pe-disc', 'pe-build', 'pe-pack' } do
     package.preload[m] = function() return Support.extra.dofile(m .. '.lua') end
 end
 
 local PE = require 'pe'
+local PEDisc = require 'pe-disc'
 
 local function readArchived(name)
     local f = Support.extra.open(name)
@@ -22,7 +24,7 @@ local state = { group = 1, viewers = {}, scripts = {}, edited = {} }
 
 local function scan()
     state.err = nil
-    state.disc, state.err = PE.open(PCSX.getCurrentIso())
+    state.disc, state.err = PEDisc.open(PCSX.getCurrentIso())
     state.viewers, state.scripts, state.edited = {}, {}, {}
     if not state.disc then return end
     -- The translation shipped with the archive, if any, is the starting point.
@@ -43,7 +45,7 @@ local function overflowing(g, bytes)
             local room = state.disc:readRoom(i)
             local info = PE.scriptInfo(room)
             local grown = info.roomSize + PE.pad4(#bytes) - PE.pad4(info.size)
-            if grown >state.disc.rooms[i].sizes[3] * 2048 then n = n + 1 end
+            if grown > state.disc.rooms[i].sizes[3] * 2048 then n = n + 1 end
         end
     end
     return n
@@ -100,7 +102,7 @@ local function buildDisc(path)
 end
 
 -- Reachable from the Lua console and from scripts.
-ParasiteEve = { PE = PE, table = tbl, state = state, scan = scan, export = exportScripts, build = buildDisc }
+ParasiteEve = { PE = PE, Disc = PEDisc, table = tbl, state = state, scan = scan, export = exportScripts, build = buildDisc }
 
 local exportDir, buildPath = '', ''
 local previous = DrawImguiFrame
