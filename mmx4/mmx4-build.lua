@@ -1,7 +1,7 @@
 -- Rebuild a Mega Man X4 (USA) disc with the French patch, through
 -- PCSX.isoBuilder. The disc is copied file by file; the four ARC files that
 -- carry the font and player graphics are rebuilt, the nine subtitled movies
--- are replaced with the processed STRs, and the executable's lookup table is
+-- and the intro are replaced with the processed STRs, and the executable's lookup table is
 -- rewritten so each entry points at where its file actually landed.
 --
 -- The game finds its data by the hardcoded sector table, not the filesystem,
@@ -157,7 +157,8 @@ function B.build(disc, out, repl, hacks)
                 end
                 n = builder:createFile(parent, e.name, content)
                 n:setSectorMode('M2_RAW')
-                n:setDeclaredSize(e.size)
+                -- The directory counts 2048 bytes per sector of a stream.
+                n:setDeclaredSize((i and repl[i]) and math.floor(#repl[i].bytes / RAW) * SECTOR or e.size)
             elseif i and repl[i] then
                 local f = Support.File.buffer()
                 f:write(repl[i].bytes)
