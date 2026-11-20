@@ -1,3 +1,15 @@
 scripts/
 *.bin
 *.zip
+# Translation data ships only in the release zips.
+*.BIN
+*.rgb
+*.rgba
+*.xa
+*.XA
+*.STR
+slus-hacks.lua
+SUBS-US/
+SUBS-JAP/
+MEDIA/
+INTRO/
