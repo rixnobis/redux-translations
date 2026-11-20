@@ -15,7 +15,7 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 cp "$here"/autoexec.lua "$here"/mmx4-index.lua "$here"/mmx4-disc.lua \
-   "$here"/mmx4-str.lua "$here"/mmx4-intro.lua "$here"/mmx4-build.lua "$here"/../common/reader.lua "$stage/"
+   "$here"/mmx4-str.lua "$here"/mmx4-intro.lua "$here"/mmx4-build.lua "$here"/../common/reader.lua "$here"/../common/edcecc.lua "$stage/"
 for f in FONT.BIN PL00.BIN PL01.BIN; do
     cp "$paq/$f" "$stage/"
 done

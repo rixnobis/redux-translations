@@ -11,6 +11,7 @@
 
 local index = require 'mmx4-index'
 local reader = require 'reader'
+local edcecc = require 'edcecc'
 local u8, s8, u16, u32 = reader.u8, reader.s8, reader.u16, reader.u32
 local w32 = reader.w32
 
@@ -148,8 +149,10 @@ function B.build(disc, out, repl, hacks)
                 -- STR and XA streams keep their raw Mode 2 sectors.
                 local content
                 if i and repl[i] then
+                    -- The edited sectors carry the original check bytes (or
+                    -- none, for new ones); M2_RAW writes them as given.
                     local f = Support.File.buffer()
-                    f:write(repl[i].bytes)
+                    f:write(edcecc.stream(repl[i].bytes))
                     f:rSeek(0)
                     content = f
                 else

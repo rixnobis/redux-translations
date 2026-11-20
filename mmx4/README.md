@@ -31,6 +31,10 @@ The size field counts bytes for an ARC, but 2336 per sector for a stream.
 - `../common/reader.lua` reads and writes little-endian numbers at byte offsets
   in strings, buffers and Redux's `LuaBuffer` and `Slice`. The others read the
   disc through it.
+- `../common/edcecc.lua` recomputes the EDC and ECC check bytes of raw Mode 2
+  sectors. Every movie the build changes goes through it before it is written,
+  because a drive that checks those bytes rejects a sector whose data no longer
+  matches them.
 - `mmx4-index.lua` is pure structure, generated from the patcher: the table's
   160 file names, which ARC gets which replacement subfile, and which movie
   gets which subtitles. It carries no translated content, so it lives here.

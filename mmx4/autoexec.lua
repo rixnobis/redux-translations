@@ -4,7 +4,7 @@
 
 -- Redux's require() does not search mounted archives yet, so point it at this
 -- archive's modules by hand. This goes away once it does.
-for _, m in ipairs { 'reader', 'mmx4-index', 'mmx4-disc', 'mmx4-str', 'mmx4-intro', 'mmx4-build' } do
+for _, m in ipairs { 'reader', 'edcecc', 'mmx4-index', 'mmx4-disc', 'mmx4-str', 'mmx4-intro', 'mmx4-build' } do
     package.preload[m] = function() return Support.extra.dofile(m .. '.lua') end
 end
 
