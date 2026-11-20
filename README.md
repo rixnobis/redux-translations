@@ -22,3 +22,19 @@ The release zip carries the 2004 French translation (text by Torakami, patcher
 by Nicolas "Pixel" Noble): the 20 scripts, the font and menu files, and the
 executable patches, which `tools/extract-hacks.lua` pulls out of the original
 `pe-hack.lua`. `tools/make-zip.sh` rebuilds the zip from those inputs.
+
+## Mega Man X4 (USA)
+
+Works on `SLUS_005.61`. There is nothing to edit: the 2004 French patch is a
+finished translation, so "Scan disc" then "Build disc" applies it and writes a
+new image. The game loads its files by a hardcoded sector table in the
+executable rather than through the filesystem, so the rebuild rewrites that
+table to match the new layout. The nine story movies get French subtitles burned
+into their FMVs through `PCSX.MDEC`: each subtitled frame is decoded, the
+overlay is alpha-blitted over it, and the frame is re-encoded to fit the sectors
+it already used.
+
+The release zip carries the 2004 French patch (Génération IX): the font and
+player archives, the executable patches, and the subtitle overlays. The intro
+rebuild (`create_intro`) and the Japanese-audio option are not ported; see
+`mmx4/README.md`.
