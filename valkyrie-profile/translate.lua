@@ -164,7 +164,7 @@ local function drawTools(v)
     drawJapaneseDisc(v)
     drawPreviewControl()
     drawBuildControl()
-    VP.glyphEditor.draw(v)
+    VP.glyphEditor.drawVP(v)
     VP.tags.drawImgui()
 end
 
