@@ -38,3 +38,12 @@ The release zip carries the 2004 French patch (Génération IX): the font and
 player archives, the executable patches, and the subtitle overlays. The intro
 rebuild (`create_intro`) and the Japanese-audio option are not ported; see
 `mmx4/README.md`.
+
+## Valkyrie Profile (USA)
+
+Works on Disc 1 (`SLUS_011.56`). The archive opens a browser over every file
+on the disc and a Translate tab on each room script, backed by a sqlite
+translation database, plus the same tool as a web page (`-webserver`, then
+`/api/v1/lua/vp`). With "Show translations in game" ticked, a saved line shows
+in the game's own textbox the next time the game loads that room. See
+`valkyrie-profile/README.md`.
