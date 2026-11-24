@@ -1,15 +1,15 @@
-// The rich editor of the Translate web view (translate-web.lua inlines this
-// file). It shows the editable text form of VP.text.toEditable with every
-// control code as a chip: a contenteditable=false span holding the exact
-// {tag} text, so a chip is deleted whole and cannot be edited by accident,
-// and the spellchecker skips it. serialize() gives back the same {tag} text,
-// with literal braces doubled again, so the form still posts the text form
-// that VP.text.fromEditable parses.
-var VPRich = (function () {
+// The rich editor of a game's Translate web view (common/web.lua inlines
+// this file). It shows the editable text form, where control codes are
+// {tags} and literal braces are doubled, with every control code as a chip:
+// a contenteditable=false span holding the exact {tag} text, so a chip is
+// deleted whole and cannot be edited by accident, and the spellchecker skips
+// it. serialize() gives back the same {tag} text, with literal braces doubled
+// again, so the form still posts the text form the game parses.
+var RichText = (function () {
   'use strict';
 
   // Splits text form into { text } runs (braces undoubled) and { tag } codes,
-  // in the order VP.text.fromEditable reads them. Returns { segments } or
+  // in the order the game parser reads them. Returns { segments } or
   // { error, at }.
   function parse(text) {
     var out = [], buf = '', i = 0;
@@ -99,7 +99,7 @@ var VPRich = (function () {
   // Makes `el` an editor bound to `textarea`: every edit writes the text form
   // back into it, so the form posts what the chips say.
   function attach(el, textarea) {
-    if (el.vpSync) return el.vpSync;
+    if (el.richSync) return el.richSync;
     function sync() {
       if (!el.lastChild || !el.lastChild.hasAttribute || !el.lastChild.hasAttribute('data-end')) el.appendChild(endMarker());
       textarea.value = serialize(el);
@@ -123,7 +123,7 @@ var VPRich = (function () {
     });
     el.addEventListener('drop', function (ev) { ev.preventDefault(); });
     el.addEventListener('input', sync);
-    el.vpSync = sync;
+    el.richSync = sync;
     return sync;
   }
 
@@ -153,26 +153,26 @@ var VPRich = (function () {
       });
       if (rich && msg) msg.textContent = '';
       if (toggle) toggle.checked = rich;
-      try { localStorage.setItem('vp-rich', rich ? '1' : '0'); } catch (e) { }
+      try { localStorage.setItem('rich-text', rich ? '1' : '0'); } catch (e) { }
     }
     pairs.forEach(function (p) {
       var ta = p.querySelector('textarea'), div = p.querySelector('.rich');
       if (!ta.readOnly) {
         var sync = attach(div, ta);
         var form = ta.form;
-        if (form && !div.vpSubmit) {
-          div.vpSubmit = true;
+        if (form && !div.richSubmit) {
+          div.richSubmit = true;
           form.addEventListener('submit', function () { if (div.style.display !== 'none') sync(); });
         }
       }
     });
-    if (toggle && !toggle.vpBound) { toggle.vpBound = true; toggle.addEventListener('change', function () { show(toggle.checked); }); }
+    if (toggle && !toggle.richBound) { toggle.richBound = true; toggle.addEventListener('change', function () { show(toggle.checked); }); }
     var stored = null;
-    try { stored = localStorage.getItem('vp-rich'); } catch (e) { }
+    try { stored = localStorage.getItem('rich-text'); } catch (e) { }
     show(stored !== '0');
   }
 
   return { parse: parse, render: render, serialize: serialize, attach: attach, setup: setup };
 })();
-if (typeof document !== 'undefined' && document.readyState !== 'loading') { if (document.querySelector('.rich-pair')) VPRich.setup(); }
-else if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', function () { if (document.querySelector('.rich-pair')) VPRich.setup(); });
+if (typeof document !== 'undefined' && document.readyState !== 'loading') { if (document.querySelector('.rich-pair')) RichText.setup(); }
+else if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', function () { if (document.querySelector('.rich-pair')) RichText.setup(); });
