@@ -1,12 +1,9 @@
 -- The model behind the Translate views (translate.lua for ImGui, the web view
--- for a browser): the open translation database, one pointer's edit state, the
--- versioned save, the fit check and the page previews. Nothing here draws.
+-- for a browser): common/tmodel.lua with Valkyrie Profile's text format,
+-- textboxes and glyphs, plus the page previews. Nothing here draws.
 --
--- An edit state is a plain table: base (the version it was loaded from), text
--- (the editable form of VP.text.toEditable), status, note, override and
--- boxX/boxY/boxW/boxH, sourceChanged, and optionally author (the translator
--- saving it, M.author when absent). Views keep their own per-pointer table
--- of them and add whatever display fields they need.
+-- A script here is a room script viewer's `extra` (VP.vfs.ptrs): key, first,
+-- tokens, raw, textboxes and style. Edit texts are VP.text.toEditable.
 --
 -- The database file is VP_TDB from the environment, or vp-fr.tdb in the current
 -- directory.
@@ -15,20 +12,6 @@ VP.tmodel = VP.tmodel or {}
 local M = VP.tmodel
 M.path = M.path or os.getenv('VP_TDB') or 'vp-fr.tdb'
 M.author = M.author or os.getenv('VP_AUTHOR') or os.getenv('USER') or ''
-
-function M.open(path)
-    if M.db then M.db:close() end
-    M.db, M.dbError = nil, nil
-    local ok, db = pcall(VP.tdb.open, path)
-    if ok then
-        M.db, M.openPath = db, path
-        -- An armed in-game preview follows the database the editor uses.
-        if VP.preview and VP.preview.armed() then VP.preview.db = db end
-    else
-        M.dbError = tostring(db)
-    end
-    return M.db
-end
 
 -- The <window .../> line glyphs.windowGeometry reads, for a textbox as
 -- extractTextboxes found it, with the row's overrides applied.
@@ -58,100 +41,26 @@ function M.originalBox(tb)
     return { x = tonumber(tb.x), y = tonumber(tb.y), width = tonumber(tb.width), height = tonumber(tb.height) }
 end
 
-local function srcHash(extra, i) return VP.text.fnv1a64(extra.raw[i]) end
-
--- The edit state of pointer i as the database holds it now.
-function M.loadEdit(extra, i, lookup)
-    local row = M.db:get(extra.key, i)
-    local live = row and not row.deletedAt
-    local e = {
-        base = row and row.version or 0,
-        text = live and VP.text.toEditable(row.tokens, lookup) or VP.text.toEditable(extra.tokens[i], lookup),
-        status = live and row.status or VP.tdb.status.untranslated,
-        note = live and row.note or '',
-        override = live and (row.boxX or row.boxY or row.boxW or row.boxH) and true or false,
-        sourceChanged = row and row.srcHash and row.srcHash ~= srcHash(extra, i),
-    }
-    local box = M.originalBox(extra.textboxes[i])
-    e.boxX = live and row.boxX or box.x or 0
-    e.boxY = live and row.boxY or box.y or 0
-    e.boxW = live and row.boxW or box.width or 0
-    e.boxH = live and row.boxH or box.height or 0
-    return e
-end
-
--- The edit's text as tokens, or nil, message, byte position.
--- Only characters of the database's target language parse.
-function M.parse(extra, e) return VP.text.fromEditable(e.text, extra.style, M.charset()) end
-
--- Characters the open database's target language may use.
-function M.charset() return M.db and M.db:charset() or VP.constants.font end
-
--- Sets the open database's languages (BCP 47 tags). Returns true, or nil and
--- a message, in which case neither changed.
-function M.setLanguages(target, source)
-    if not M.db then return nil, 'No database open' end
-    for _, t in ipairs({ target, source }) do
-        if not VP.languages.valid(t) then return nil, 'Not a language tag: ' .. tostring(t) end
-    end
-    M.db:setLanguage('target', target)
-    M.db:setLanguage('source', source)
-    return true
-end
-
--- The open database's target and source languages, or the defaults.
-function M.languages()
-    if not M.db then return 'fr', 'en' end
-    return M.db:targetLanguage(), M.db:sourceLanguage()
-end
-
-local function rowFromEdit(extra, i, e, tokens)
-    local row = {
-        key = extra.key, idx = i, srcHash = srcHash(extra, i), tokens = tokens, status = e.status,
-        author = (e.author or M.author) ~= '' and (e.author or M.author) or nil, note = e.note ~= '' and e.note or nil,
-    }
-    if e.override then row.boxX, row.boxY, row.boxW, row.boxH = e.boxX, e.boxY, e.boxW, e.boxH end
-    return row
-end
-
--- Saves e as the version after `expected`. Returns 'saved', row; 'conflict',
--- their row; or 'error', message. On success e.base and e.sourceChanged follow.
-function M.save(extra, i, e, tokens, expected, lookup)
-    local ctx = { box = M.originalBox(extra.textboxes[i]), lookup = lookup }
-    local ok, r = M.db:put(rowFromEdit(extra, i, e, tokens), expected, ctx)
-    if ok then
-        e.base, e.sourceChanged = r.version, false
-        return 'saved', r
-    elseif ok == false then
-        return 'conflict', r
-    end
-    return 'error', r
-end
-
--- First pointer after `from` (wrapping) with no live translation.
-function M.nextUntranslated(extra, nptrs, from)
-    local n = nptrs - extra.first + 1
-    for k = 1, n do
-        local i = (from - extra.first + k) % n + extra.first
-        local row = M.db:get(extra.key, i)
-        if not row or row.deletedAt or row.status == VP.tdb.status.untranslated then return i end
-    end
-    return nil
-end
-
--- Counts by status over pointers first..nptrs, indexed 0..2.
-function M.counts(extra, nptrs)
-    local c = { [0] = 0, 0, 0 }
-    local seen = 0
-    for row in M.db:query { script = extra.key } do
-        if row.idx >= extra.first and row.idx <= nptrs then
-            c[row.status] = (c[row.status] or 0) + 1
-            seen = seen + 1
-        end
-    end
-    c[0] = c[0] + (nptrs - extra.first + 1 - seen)
-    return c
-end
+require('tmodel').install(M, {
+    open = function(path) return VP.tdb.open(path) end,
+    -- An armed in-game preview follows the database the editor uses.
+    onOpen = function(db) if VP.preview and VP.preview.armed() then VP.preview.db = db end end,
+    key = function(extra) return extra.key end,
+    first = function(extra) return extra.first end,
+    source = function(extra, i) return extra.tokens[i] end,
+    hash = function(extra, i) return VP.text.fnv1a64(extra.raw[i]) end,
+    editable = function(tokens, lookup) return VP.text.toEditable(tokens, lookup) end,
+    parse = function(extra, text, charset) return VP.text.fromEditable(text, extra.style, charset) end,
+    originalBox = function(extra, i) return M.originalBox(extra.textboxes[i]) end,
+    saveContext = function(extra, i, lookup) return { box = M.originalBox(extra.textboxes[i]), lookup = lookup } end,
+    defaultCharset = function() return VP.constants.font end,
+    glyph = setmetatable({}, { __index = function(_, k)
+        local F = VP.fontedit
+        if k == 'height' then return F.HEIGHT end
+        if k == 'blank' then return function() return F.blank() end end
+        return F[k]
+    end }),
+})
 
 -- The original page as the game leaves it: window, pages.
 function M.originalPreview(ptrText, extra, i, lookup)
@@ -171,80 +80,4 @@ function M.translationPreview(extra, i, e, tokens, lookup)
     local box = VP.tdb.effectiveBox(row or {}, M.originalBox(tb))
     local problems, notes, wrapped = VP.tdb.fitProblems(tokens, box, lookup, M.charset())
     return window, VP.glyphs.scrollPages(wrapped, box.height), problems, notes
-end
-
--- One line per saved version, in the order VP.tdb's history returns them.
-function M.history(extra, i, lookup)
-    local out = {}
-    for _, h in ipairs(M.db:history(extra.key, i)) do
-        local t = h.tokens and VP.text.toEditable(h.tokens, lookup):gsub('\n', ' / ') or ''
-        if #t > 80 then t = t:sub(1, 80) .. '...' end
-        out[#out + 1] = string.format('v%d %s %s %s%s: %s', h.version, os.date('!%Y-%m-%d %H:%M', h.updatedAt),
-            h.author or '?', VP.tdb.statusNames[h.status] or '?', h.deletedAt and ' (deleted)' or '', t)
-    end
-    return out
-end
-
--- Glyphs. The database's target language owns a set of edited and added
--- glyphs (tdb putGlyph); both views edit them through these. A glyph edit
--- state is: ch, base (the stored version it was read at, 0 for none), rows
--- (VP.fontedit rows), width (the advance), origin ('retail', 'letter',
--- 'edited', 'added' or 'new'), note, and conflict after a stale save.
-
--- Every editable character of the target language, VP.fontedit.entries.
-function M.glyphEntries()
-    return VP.fontedit.entries(M.db:glyphLanguage(), M.db:glyphEdits())
-end
-
-function M.loadGlyph(ch)
-    local F = VP.fontedit
-    local row = M.db:glyph(ch)
-    local g = M.db:charset()[ch]
-    local live = row and not row.deletedAt
-    return {
-        ch = ch,
-        base = row and row.version or 0,
-        rows = g and F.rows(g.data, g.height) or F.blank(),
-        width = g and g.width or 1,
-        origin = g and F.origin(ch, M.db:targetLanguage(), live) or 'new',
-        note = live and row.note or '',
-    }
-end
-
--- The glyph an edit state describes, as tdb:putGlyph takes it.
-function M.glyphOf(ge)
-    return { ch = ge.ch, width = ge.width, height = VP.fontedit.HEIGHT, data = VP.fontedit.encode(ge.rows),
-        note = ge.note ~= '' and ge.note or nil, author = ge.author or M.author }
-end
-
--- Problems (refusals) and notes of an edit state, VP.fontedit.check.
-function M.checkGlyph(ge)
-    return VP.fontedit.check(M.glyphOf(ge), M.db:charset())
-end
-
--- Returns 'saved' and the row, 'conflict' and the stored row, or 'error' and
--- a message. expected defaults to the version the state was read at.
-function M.saveGlyph(ge, expected)
-    local ok, r = M.db:putGlyph(M.glyphOf(ge), expected or ge.base)
-    if ok then return 'saved', r end
-    if ok == false then return 'conflict', r end
-    return 'error', r
-end
-
--- Back to the retail or language glyph (an added character goes away).
-function M.revertGlyph(ge, expected)
-    local ok, r = M.db:deleteGlyph(ge.ch, expected or ge.base, ge.author or M.author)
-    if ok then return 'saved', r end
-    if ok == false then return r and 'conflict' or 'error', r or 'Nothing to revert: the glyph was never edited.' end
-end
-
--- One line per stored version of ch.
-function M.glyphHistory(ch)
-    local out = {}
-    for _, h in ipairs(M.db:glyphHistory(ch)) do
-        out[#out + 1] = string.format('v%d %s %s: %s, advance %d, extent %d%s', h.version,
-            os.date('!%Y-%m-%d %H:%M', h.updatedAt), h.author or '?', h.deletedAt and 'reverted' or 'saved',
-            h.width, VP.fontedit.extent(VP.fontedit.rows(h.data, h.height)), h.note and (' (' .. h.note .. ')') or '')
-    end
-    return out
 end
