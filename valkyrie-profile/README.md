@@ -29,8 +29,10 @@ font, mixed with control codes (`text.lua`, documented in `tags.lua`).
   `scripts.lua` and `disasm.lua` read room scripts and their text boxes.
 - `font.lua`, `glyphs.lua`, `languages.lua` and `fontedit.lua` handle glyphs
   and the letters each target language adds.
-- `tdb.lua` is the translation database: strings keyed by a hash of the
-  retail script, versioned writes, history, and edited glyphs.
+- `tdb.lua` opens the translation database, `../common/tdb.lua`, with this
+  game's rules: strings keyed by a hash of the retail script, a reviewed line
+  has to fit its textbox, and edited glyphs must be 12 pixels high. The common
+  part does the versioned writes, history, soft deletes and stored glyphs.
 - `translate-model.lua` is shared by the two views: `translate.lua` (the
   ImGui tab) and `translate-web.lua` with `translate-web.js` (the web page).
   `glyph-editor.lua` and `translate-web-glyphs.lua` are the glyph editors.

@@ -16,8 +16,10 @@ trap 'rm -rf "$stage"' EXIT
 (cd "$here" && ls *.lua translate-web.js | grep -v -e '-test\.lua$' -e '-gen\.lua$' -e '^main\.lua$' -e '^font-database\.lua$') |
     while read -r f; do cp "$here/$f" "$stage/"; done
 cp "$font" "$stage/font-database.lua"
+mkdir "$stage/common"
+cp "$here/../common/tdb.lua" "$stage/common/"
 mkdir -p "$(dirname "$out")"
 out=$(cd "$(dirname "$out")" && pwd)/$(basename "$out")
 rm -f "$out"
-(cd "$stage" && zip -q -X -9 "$out" *)
-echo "wrote $out ($(ls "$stage" | wc -l) files)"
+(cd "$stage" && zip -q -X -9 -r -D "$out" .)
+echo "wrote $out ($(find "$stage" -type f | wc -l) files)"

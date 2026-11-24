@@ -34,6 +34,16 @@ if not VP.searcher then
         return assert(loadstring(text, '@' .. path))
     end
     table.insert(package.loaders, 2, VP.searcher)
+    -- Modules shared by the games (require 'tdb'): common/ in the zip,
+    -- ../common in a source tree.
+    VP.commonSearcher = function(module)
+        if not module:match('^[%w%-_]+$') then return end
+        for _, path in ipairs({ 'common/' .. module .. '.lua', '../common/' .. module .. '.lua' }) do
+            local text = VP.readFile(path)
+            if text then return assert(loadstring(text, '@' .. VP.here .. path)) end
+        end
+    end
+    table.insert(package.loaders, 3, VP.commonSearcher)
 end
 local function d(name) return require('vp.' .. name:gsub('%.lua$', '')) end
 
