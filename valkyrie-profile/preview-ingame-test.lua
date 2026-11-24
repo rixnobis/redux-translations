@@ -21,6 +21,10 @@ local ffi = require('ffi')
 
 local ROOM, FIND, REPL = '3613.arm', 'I must hurry!', 'Je dois me dépêcher !'
 local red = os.getenv('VP_PREVIEW_INGAME_RED') == '1'
+-- VP_INGAME_BUILT=1: the loaded disc was written by VP.build.disc with the
+-- translation already in it (build-test.lua's fr.bin). Nothing is armed and
+-- PASS needs only the glyphs on screen. Its red arm is the retail disc.
+local built = os.getenv('VP_INGAME_BUILT') == '1'
 local shotDir = os.getenv('VP_SHOTS')
 
 local function fail(msg)
@@ -48,10 +52,12 @@ local function findViewer()
     return found
 end
 
+local db, dbPath, extra
+if not built then
 local v = findViewer()
 if not v then return fail('no Room script viewer for ' .. ROOM .. ' (is USA disc 1 loaded?)') end
 VP.vfs.ptrs(v)
-local extra = v.extra
+extra = v.extra
 local lookup = resolveFont(extra.font)
 local idx, edited
 local i = extra.first
@@ -65,12 +71,15 @@ while extra.tokens[i] do
 end
 if not idx then return fail('no string containing ' .. FIND) end
 local toks = assert(VP.text.fromEditable(edited, 'primary'))
-local dbPath = os.tmpname()
-local db = VP.tdb.open(dbPath)
+dbPath = os.tmpname()
+db = VP.tdb.open(dbPath)
 assert(db:put({ key = extra.key, idx = idx, tokens = toks, status = VP.tdb.status.draft, author = 'test',
                 srcHash = VP.text.fnv1a64(extra.raw[idx]) }, 0))
 if not red then VP.preview.arm(db) end
 print(string.format('room %s key %s pointer %d, preview %s', ROOM, extra.key, idx, red and 'NOT armed (red arm)' or 'armed'))
+else
+    print('built disc: nothing armed, looking for the translation as the disc carries it')
+end
 
 -- Glyph templates from the font database, rows of 0/1.
 local function template(ch)
@@ -148,9 +157,11 @@ VP.previewIngameListener = PCSX.Events.createEventListener('GPU::Vsync', functio
     if frames >= LOOK_FROM and frames % LOOK_EVERY == 0 then look(frames) end
     if frames == LOOK_TO then
         for _, l in ipairs(VP.preview.log) do print('preview: ' .. l) end
-        db:close()
-        os.remove(dbPath)
-        local patched = VP.preview.lastPatch and VP.preview.lastPatch.key == extra.key
+        if db then
+            db:close()
+            os.remove(dbPath)
+        end
+        local patched = built or (VP.preview.lastPatch and VP.preview.lastPatch.key == extra.key)
         local all = true
         for _, ch in ipairs(wanted) do if not found[ch] then all = false end end
         print(string.format('patched=%s glyphs=%s', tostring(patched), tostring(all)))
