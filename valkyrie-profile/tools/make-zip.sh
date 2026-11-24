@@ -17,7 +17,9 @@ trap 'rm -rf "$stage"' EXIT
     while read -r f; do cp "$here/$f" "$stage/"; done
 cp "$font" "$stage/font-database.lua"
 mkdir "$stage/common"
-cp "$here/../common/tdb.lua" "$here/../common/tmodel.lua" "$stage/common/"
+for f in "$here"/../common/*.lua; do
+    case "$f" in *-test.lua) ;; *) cp "$f" "$stage/common/" ;; esac
+done
 mkdir -p "$(dirname "$out")"
 out=$(cd "$(dirname "$out")" && pwd)/$(basename "$out")
 rm -f "$out"
