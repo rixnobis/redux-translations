@@ -281,8 +281,8 @@ end
 -- characters with no glyph in that database.
 -- Breaks a line the way the game's textbox does: a line wider than the box
 -- wraps at the last space that keeps it within width, and the spaces at the
--- break are dropped. Measured in game on retail strings (the 3615 and 3622
--- samples on Board#1975). Returns the wrapped lines and whether some word is
+-- break are dropped. Measured in game on retail strings of rooms 3615 and
+-- 3622. Returns the wrapped lines and whether some word is
 -- wider than the box on its own. width nil returns the line unchanged.
 function VP.glyphs.wrapLine(line, width, set)
     if type(width) ~= 'number' then return { line }, false end
