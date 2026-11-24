@@ -37,6 +37,11 @@ font, mixed with control codes (`text.lua`, documented in `tags.lua`).
 - `preview.lua` rebuilds a room script from the database and patches it into
   RAM when the game loads that room, so a translation shows in game with no
   disc rebuild.
+- `build.lua` writes a new disc through `PCSX.isoBuilder`: every file stays
+  where the retail disc has it, each room archive the database changes is
+  rebuilt and written after the end of `VALKYRIE.BIN`, and its index entry
+  is pointed there. `build-test.lua` builds one and reads it back, and
+  `preview-ingame-test.lua` with `VP_INGAME_BUILT=1` plays it to the line.
 - `jp.lua` and `jpmatch.lua` show the Japanese script beside the English one
   when a Japanese disc is given.
 - `images.lua`, `sounds.lua` and `loadlog.lua` are viewers and a file load

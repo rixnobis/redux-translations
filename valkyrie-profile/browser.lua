@@ -75,6 +75,7 @@ d 'glyph-editor.lua'
 d 'translate-web.lua'
 d 'translate-web-glyphs.lua'
 d 'preview.lua'
+d 'build.lua'
 -- The GUI loads this resource at startup; without a GUI (-no-ui) it does not.
 if not (PCSX.FileViewers and PCSX.FileViewers.soundViewer) then
     -- Without a GUI there is none, and images and sounds have no viewer.

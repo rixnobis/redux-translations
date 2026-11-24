@@ -119,6 +119,31 @@ local function drawPreviewControl()
     if #log > 0 then imgui.TextUnformatted('Last: ' .. log[#log]) end
 end
 
+-- A whole disc with this database's translations (drafts and reviewed) in it,
+-- written as a .bin and .cue. The window stops responding while it builds.
+local function drawBuildControl()
+    if not M.buildPath then
+        M.buildPath = (M.path or 'valkyrie-profile.tdb'):gsub('%.[^./\\]*$', '') .. '-translated.bin'
+    end
+    imgui.TextUnformatted('Disc image')
+    imgui.SameLine()
+    imgui.SetNextItemWidth(400)
+    local _, path = imgui.extra.InputText('##buildpath', M.buildPath)
+    M.buildPath = path
+    imgui.SameLine()
+    if imgui.Button('Build disc') then
+        if not M.buildPath:lower():match('%.bin$') then
+            M.buildResult, M.buildError = nil, 'the disc image name has to end in .bin'
+        else
+            M.buildResult, M.buildError = VP.build.write(PCSX.getCurrentIso(), M.db, M.buildPath)
+        end
+    end
+    imgui.SameLine()
+    imgui.TextUnformatted('Takes a minute or two.')
+    if M.buildError then colored(RED, M.buildError) end
+    if M.buildResult then imgui.TextUnformatted(M.buildResult) end
+end
+
 -- The database's languages: the target picks the letters a translation may
 -- use, and both are what the web view tells the browser's spellchecker.
 local function drawLanguages(v)
@@ -185,6 +210,7 @@ local function drawTranslate(v, room)
     drawLanguages(v)
     drawJapaneseDisc(v)
     drawPreviewControl()
+    drawBuildControl()
     VP.glyphEditor.draw(v)
     VP.tags.drawImgui()
 
