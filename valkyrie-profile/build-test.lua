@@ -98,7 +98,11 @@ if not red then
     assert(db:put({ key = extra.key, idx = idx, tokens = toks, status = VP.tdb.status.draft, author = 'test',
                     srcHash = VP.text.fnv1a64(extra.raw[idx]) }, 0))
 end
-local ok2, n2, lines = writeDisc('fr', db)
+-- Through VP.build.write, the call the Translate tab's Build disc button makes.
+local lines = {}
+local msg, n2 = VP.build.write(iso, db, outDir .. '/fr.bin', function(l) lines[#lines + 1] = l print('  ' .. l) end)
+print('  ' .. tostring(msg))
+local ok2 = msg ~= nil and n2 ~= nil
 db:close()
 os.remove(dbPath)
 check(ok2 == true, 'fr build succeeded')

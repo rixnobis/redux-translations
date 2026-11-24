@@ -225,3 +225,20 @@ function build.disc(iso, db, out, report)
     for _ = 1, TAIL_PAD do builder:writeSector(blank) end
     return true, #appended
 end
+
+-- Writes path (a .bin) and a .cue beside it. Returns a line saying what was
+-- written, or nil and an error.
+function build.write(iso, db, path, report)
+    local out = Support.File.open(path, 'TRUNCATE')
+    if out:failed() then return nil, 'cannot write ' .. path end
+    local ok, n = build.disc(iso, db, out, report)
+    out:close()
+    if not ok then return nil, 'build failed: ' .. tostring(n) end
+    local name = path:match('[^/\\]+$')
+    local cuePath = path:gsub('%.[^./\\]*$', '') .. '.cue'
+    local cue = io.open(cuePath, 'w')
+    if not cue then return nil, 'cannot write ' .. cuePath end
+    cue:write('FILE "' .. name .. '" BINARY\r\n  TRACK 01 MODE2/2352\r\n    INDEX 01 00:00:00\r\n')
+    cue:close()
+    return string.format('wrote %s and %s, %d room(s) rebuilt', path, cuePath, n), n
+end
