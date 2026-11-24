@@ -13,11 +13,11 @@ out=$2
 here=$(cd "$(dirname "$0")/.." && pwd)
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
-(cd "$here" && ls *.lua translate-web.js | grep -v -e '-test\.lua$' -e '-gen\.lua$' -e '^main\.lua$' -e '^font-database\.lua$') |
+(cd "$here" && ls *.lua | grep -v -e '-test\.lua$' -e '-gen\.lua$' -e '^main\.lua$' -e '^font-database\.lua$') |
     while read -r f; do cp "$here/$f" "$stage/"; done
 cp "$font" "$stage/font-database.lua"
 mkdir "$stage/common"
-for f in "$here"/../common/*.lua; do
+for f in "$here"/../common/*.lua "$here"/../common/*.js; do
     case "$f" in *-test.lua) ;; *) cp "$f" "$stage/common/" ;; esac
 done
 mkdir -p "$(dirname "$out")"

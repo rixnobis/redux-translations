@@ -1,4 +1,4 @@
-// Tests of the web view's rich editor (translate-web.js) in headless Chromium,
+// Tests of the web view's rich editor (common/rich-text.js) in headless Chromium,
 // driven over the DevTools protocol with nothing but Node (22 or later).
 //
 //   VP_EDITABLE_OUT=/tmp/editable.jsonl VP_DISC1=<disc.cue> \
@@ -59,13 +59,13 @@ writeFileSync(page, `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 body { font-family: sans-serif; background: #fff; }
 .rich { font-family: monospace; font-size: 18px; white-space: pre-wrap; border: 1px solid #888; width: 700px; min-height: 3em; }
 .chip { background: #3d5a80; color: #fff; border-radius: 3px; padding: 0 3px; }
-</style><script src="file://${join(here, 'translate-web.js')}"></script></head><body>
+</style><script src="file://${join(here, '..', 'common', 'rich-text.js')}"></script></head><body>
 <div id="scratch" class="rich"></div>
 <div class="rich-pair"><textarea id="ta"></textarea><div id="ed" class="rich" contenteditable="true" lang="fr" spellcheck="true"></div></div>
 <p>spellcheck on, lang=fr:</p><div id="sp" class="rich" contenteditable="true" lang="fr" spellcheck="true"></div>
 <p>spellcheck off:</p><div id="sp0" class="rich" contenteditable="true" lang="fr" spellcheck="false"></div>
-${red === '1' ? '<script>VPRich.serializeOrig = VPRich.serialize; VPRich.serialize = function (el) { return VPRich.serializeOrig(el).replace(/\\{\\{/g, "{").replace(/\\}\\}/g, "}"); };</script>' : ''}
-${red === '2' ? '<script>VPRich.serializeOrig = VPRich.serialize; VPRich.serialize = function (el) { return VPRich.serializeOrig(el) + (el.querySelector("br[data-end]") ? "\\n" : ""); };</script>' : ''}
+${red === '1' ? '<script>RichText.serializeOrig = RichText.serialize; RichText.serialize = function (el) { return RichText.serializeOrig(el).replace(/\\{\\{/g, "{").replace(/\\}\\}/g, "}"); };</script>' : ''}
+${red === '2' ? '<script>RichText.serializeOrig = RichText.serialize; RichText.serialize = function (el) { return RichText.serializeOrig(el) + (el.querySelector("br[data-end]") ? "\\n" : ""); };</script>' : ''}
 </body></html>`);
 
 const port = 9300 + (process.pid % 500);
@@ -107,7 +107,7 @@ const key = async (k, code, vk, text) => {
 
 await send('Page.enable');
 await send('Page.navigate', { url: 'file://' + page });
-for (let i = 0; i < 50 && !(await evaluate('typeof VPRich !== "undefined" && !!document.getElementById("sp0")').catch(() => false)); i++) await sleep(100);
+for (let i = 0; i < 50 && !(await evaluate('typeof RichText !== "undefined" && !!document.getElementById("sp0")').catch(() => false)); i++) await sleep(100);
 
 // 1. Round trip over the corpus.
 const rt = await evaluate(`(() => {
@@ -116,13 +116,13 @@ const rt = await evaluate(`(() => {
   let bad = [], chips = 0;
   for (let i = 0; i < corpus.length; i++) {
     const t = corpus[i];
-    const e = VPRich.render(el, t);
+    const e = RichText.render(el, t);
     if (e) { bad.push([i, 'render: ' + e.error]); continue; }
     chips += el.querySelectorAll('.chip').length;
     const h1 = el.innerHTML;
-    const back = VPRich.serialize(el);
+    const back = RichText.serialize(el);
     if (back !== t) { bad.push([i, 'text differs: ' + JSON.stringify(back).slice(0, 120)]); continue; }
-    VPRich.render(el, back);
+    RichText.render(el, back);
     if (el.innerHTML !== h1) bad.push([i, 'chips differ']);
   }
   return { n: corpus.length, chips, bad: bad.slice(0, 10), nbad: bad.length };
@@ -132,7 +132,7 @@ for (const b of rt.bad) console.log(`  #${b[0]} ${JSON.stringify(corpus[b[0]]).s
 if (rt.nbad > 0 || nCorpus < 1000 || rt.chips === 0) fail('round trip');
 
 // 2. A chip is deleted whole and cannot be typed into.
-await evaluate(`(() => { const ta = document.getElementById('ta'); ta.value = 'Hi{pause}x{{y}}'; VPRich.setup(); })()`);
+await evaluate(`(() => { const ta = document.getElementById('ta'); ta.value = 'Hi{pause}x{{y}}'; RichText.setup(); })()`);
 const caretAfter = async (nodeExpr) => evaluate(`(() => {
   const n = ${nodeExpr}; const el = document.getElementById('ed'); el.focus();
   const r = document.createRange(); r.setStartAfter(n); r.collapse(true);
@@ -142,7 +142,7 @@ await key('Backspace', 'Backspace', 8);
 const afterBs = await evaluate(`document.getElementById('ta').value`);
 console.log(`backspace after the chip: ${JSON.stringify(afterBs)}`);
 if (afterBs !== 'Hix{{y}}') fail('backspace did not remove the chip whole');
-await evaluate(`(() => { document.getElementById('ta').value = 'Hi{spd 2}x'; VPRich.render(document.getElementById('ed'), 'Hi{spd 2}x'); })()`);
+await evaluate(`(() => { document.getElementById('ta').value = 'Hi{spd 2}x'; RichText.render(document.getElementById('ed'), 'Hi{spd 2}x'); })()`);
 // Caret placed inside the chip's own text, then a letter typed.
 await evaluate(`(() => { const c = document.querySelector('#ed .chip'); document.getElementById('ed').focus();
   const r = document.createRange(); r.setStart(c.firstChild, 1); r.collapse(true);

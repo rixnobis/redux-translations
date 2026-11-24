@@ -34,7 +34,8 @@ font, mixed with control codes (`text.lua`, documented in `tags.lua`).
   has to fit its textbox, and edited glyphs must be 12 pixels high. The common
   part does the versioned writes, history, soft deletes and stored glyphs.
 - `translate-model.lua` is shared by the two views: `translate.lua` (the
-  ImGui tab) and `translate-web.lua` with `translate-web.js` (the web page).
+  ImGui tab) and `translate-web.lua` (the web page, with `../common/web.lua` and
+  `../common/rich-text.js`).
   `glyph-editor.lua` and `translate-web-glyphs.lua` are the glyph editors.
 - `preview.lua` rebuilds a room script from the database and patches it into
   RAM when the game loads that room, so a translation shows in game with no

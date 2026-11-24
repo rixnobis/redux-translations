@@ -20,73 +20,12 @@ local M = VP.tmodel
 local H = PCSX.Html
 local BASE = '/api/v1/lua/vp'
 
--- The rich editor's script, read once from the directory browser.lua is in.
-do
-    W.richScript = VP.readFile and VP.readFile('translate-web.js')
-    if not W.richScript then
-        print('translate-web: translate-web.js not found, the editor stays plain text')
-    end
-end
+local web = require 'web'
+local link, html, redirect, parseForm = web.linker(BASE), web.html, web.redirect, web.parseForm
+local richPair = web.richPair
 
-local function decode(s)
-    return (s:gsub('+', ' '):gsub('%%(%x%x)', function(h) return string.char(tonumber(h, 16)) end))
-end
-
-local function encode(s)
-    return (tostring(s):gsub('[^%w%-%._~/]', function(c) return string.format('%%%02X', c:byte()) end))
-end
-
-local function parseForm(s)
-    local t = {}
-    for pair in (s or ''):gmatch('[^&]+') do
-        local k, v = pair:match('^([^=]*)=?(.*)$')
-        t[decode(k)] = decode(v)
-    end
-    return t
-end
-
-local function link(params)
-    local parts = {}
-    for _, kv in ipairs(params) do parts[#parts + 1] = kv[1] .. '=' .. encode(kv[2]) end
-    return BASE .. '?' .. table.concat(parts, '&')
-end
-
-local function response(status, body, headers)
-    local h = { 'HTTP/1.1 ' .. status }
-    for k, v in pairs(headers or {}) do h[#h + 1] = k .. ': ' .. v end
-    h[#h + 1] = 'Content-Length: ' .. #body
-    h[#h + 1] = 'Connection: close'
-    return table.concat(h, '\r\n') .. '\r\n\r\n' .. body
-end
-
-local function html(status, title, body)
-    local page = H.html {
-        H.head {
-            H.meta { charset = 'utf-8' },
-            H.title(title),
-            H.style(H.raw [[
-body { font-family: sans-serif; margin: 1em; background: #1d1f23; color: #ddd; }
-a { color: #8cf; } textarea, input { background: #2a2d33; color: #eee; border: 1px solid #555; }
-textarea { width: 100%; font-family: monospace; font-size: 14px; }
-.cols { display: flex; gap: 1.5em; align-items: flex-start; } .cols > div { flex: 1; } .pages { display: flex; flex-wrap: wrap; gap: 0 1em; }
-.red { color: #f66; } .green { color: #6d6; } .yellow { color: #ec4; } .dim { color: #999; }
-input[type=number] { width: 5em; }
-.screen img { width: 640px; image-rendering: pixelated; border: 1px solid #555; }
-.rich { background: #2a2d33; color: #eee; border: 1px solid #555; font-family: monospace; font-size: 14px;
-        white-space: pre-wrap; min-height: 6em; padding: 2px; overflow-wrap: anywhere; }
-.rich[contenteditable=true] { min-height: 9em; } .rich:focus { outline: 1px solid #8cf; }
-.chip { background: #3d5a80; color: #fff; border-radius: 3px; padding: 0 3px; margin: 0 1px; font-size: 12px;
-        user-select: all; cursor: default; } .chip-new { background: #80603d; }
-img.gamepage { image-rendering: pixelated; border: 1px solid #555; display: block; margin: 4px 0; }
-table.list td { padding: 1px 1em 1px 0; } .hist { font-family: monospace; font-size: 12px; }
-]]),
-        },
-        H.body(body),
-    }
-    return response(status, H.render(page), { ['Content-Type'] = 'text/html; charset=utf-8' })
-end
-
-local function redirect(url) return response('303 See Other', '', { Location = url }) end
+-- The rich editor's script: common/ in the zip, ../common in a source tree.
+web.loadRichScript(VP.readFile, { 'common/rich-text.js', '../common/rich-text.js' })
 
 -- path -> room script viewer, over the whole disc, built on first use.
 function W.index()
@@ -136,18 +75,6 @@ local function header(back)
         -- (Translate tab or VP_DISC_JP), never from this page.
         ' | Japanese disc ', VP.jp.status() == 'ok' and H.code(VP.jp.disc.exe) or
             H.span { class = 'dim', VP.jp.status() == 'unset' and 'not opened' or VP.jp.status() },
-    }
-end
-
--- A text-form field that the rich editor can show as chips: the textarea is
--- what the form posts, the div the chips. lang drives the browser spellchecker.
-local function richPair(textarea, lang, readonly)
-    textarea.attrs.lang = lang
-    textarea.attrs.spellcheck = readonly and 'false' or 'true'
-    return H.div { class = 'rich-pair',
-        textarea,
-        H.div { class = 'rich', lang = lang, spellcheck = readonly and 'false' or 'true',
-            contenteditable = not readonly and 'true' or false, style = 'display: none' },
     }
 end
 
@@ -347,7 +274,7 @@ local function editPage(path, i, e, message, conflict)
             },
             H.div { screenBlock() },
         },
-        W.richScript and H.script(H.raw(W.richScript)) or false,
+        web.richScriptTag(),
     })
 end
 
