@@ -5,7 +5,8 @@
 
 VP.images = VP.images or {}
 
-function VP.images.parseTim(file) return PCSX.FileViewers.parseTim(file) end
+-- With no PCSX.FileViewers (headless, no GUI) nothing parses as a TIM.
+function VP.images.parseTim(file) return PCSX.FileViewers and PCSX.FileViewers.parseTim(file) end
 
 function VP.images.timViewer(node, tim) return PCSX.FileViewers.timViewer(node.open, tim) end
 

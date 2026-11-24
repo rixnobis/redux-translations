@@ -88,8 +88,12 @@ d 'preview.lua'
 d 'build.lua'
 -- The GUI loads this resource at startup; without a GUI (-no-ui) it does not.
 if not (PCSX.FileViewers and PCSX.FileViewers.soundViewer) then
-    -- Without a GUI there is none, and images and sounds have no viewer.
-    print('vp: no PCSX.FileViewers (no GUI), image and sound viewers disabled')
+    -- Without a GUI there is none. REDUX_FILEVIEWERS can name a pcsx-redux
+    -- checkout's resources/fileviewers.lua to load it anyway (headless tests).
+    local path = os.getenv('REDUX_FILEVIEWERS')
+    if not (path and pcall(Support.extra.dofile, path)) then
+        print('vp: no PCSX.FileViewers (no GUI), image and sound viewers disabled')
+    end
 end
 d 'images.lua'
 d 'sounds.lua'
