@@ -9,7 +9,7 @@
 --      the changed string reads back as the new tokens, every other string and
 --      the rest of the logic are unchanged, and the box reads back widened.
 --
---   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile examples/vp/preview-test.lua
+--   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile valkyrie-profile/preview-test.lua
 --
 -- VP_PREVIEW_RED=1 makes the rebuild leave the header's strings length stale,
 -- which must fail checks 3 on every script.

@@ -1,7 +1,7 @@
 -- Writes tag-counts.lua: how often each control-code tag occurs in the room
 -- scripts of a disc, each distinct script counted once (rooms share scripts).
 --
---   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile examples/vp/tag-counts-gen.lua
+--   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile valkyrie-profile/tag-counts-gen.lua
 --
 -- VP_TAGCOUNTS_OUT overrides the output path (default: next to this script).
 local here = debug.getinfo(1, 'S').source:match('^@(.*/)') or './'

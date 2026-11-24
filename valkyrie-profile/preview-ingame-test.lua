@@ -3,7 +3,7 @@
 -- translation's accented glyphs in the real textbox.
 --
 --   pcsx-redux -cli -interpreter -debugger -iso <USA disc 1.cue> \
---       -dofile examples/vp/preview-ingame-test.lua -run
+--       -dofile valkyrie-profile/preview-ingame-test.lua -run
 --
 -- "I must hurry!" becomes "Je dois me dépêcher !". The room's font has no é
 -- or ê, so they only reach the screen if the font was extended too. A glyph

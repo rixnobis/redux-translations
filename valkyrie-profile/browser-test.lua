@@ -1,6 +1,6 @@
 -- Headless check of the browser's node model: opens a disc, walks the tree,
 -- expands a sample of entries and renders every viewer it finds.
---   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile examples/vp/browser-test.lua
+--   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile valkyrie-profile/browser-test.lua
 -- VP_BROWSE_ALL=1 expands every index entry instead of the sample.
 
 -- Absolute path, so browser.lua's own relative dofiles resolve against its

@@ -2,7 +2,7 @@
 -- has a row, every row's argument width is the codec's, and the web page lists
 -- every row. No disc needed (counts come from tag-counts.lua).
 --
---   pcsx-redux -cli -dofile examples/vp/tags-test.lua
+--   pcsx-redux -cli -dofile valkyrie-profile/tags-test.lua
 --
 -- Red arm: VP_TAGS_RED=1 drops the aliases from the rows, which the counted-tag
 -- check must catch.

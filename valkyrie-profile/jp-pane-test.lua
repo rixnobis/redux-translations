@@ -3,7 +3,7 @@
 -- edit page shows it (text and game-font page). A room whose logics differ
 -- shows no JP string.
 --
---   VP_DISC_JP=<jp.cue> VP_TDB=<scratch.tdb> pcsx-redux -cli -iso <us.cue> -dofile examples/vp/jp-pane-test.lua
+--   VP_DISC_JP=<jp.cue> VP_TDB=<scratch.tdb> pcsx-redux -cli -iso <us.cue> -dofile valkyrie-profile/jp-pane-test.lua
 --
 -- VP_JP_PANE_RED=1 pairs US rooms with the JP room one entry too early, which
 -- must fail. VP_JP_PANE_HTML=<file> writes the edit page there.

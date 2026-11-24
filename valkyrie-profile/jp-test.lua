@@ -4,7 +4,7 @@
 -- as well, rooms are paired by index (JP = US + 117) and strings by pointer
 -- index, and the match statistics are printed.
 --
---   VP_DISC_JP=<jp.cue> [VP_DISC_US=<us.cue>] pcsx-redux -cli -dofile examples/vp/jp-test.lua
+--   VP_DISC_JP=<jp.cue> [VP_DISC_US=<us.cue>] pcsx-redux -cli -dofile valkyrie-profile/jp-test.lua
 --
 -- VP_JP_RED=1 looks the JP glyphs up in the US font database, which must make
 -- the extraction fail. VP_JP_RED=2 keeps one JP glyph per character (the

@@ -6,7 +6,7 @@
 -- identical scripts get identical keys, and different scripts different ones)
 -- and measures every string.
 --
---   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile examples/vp/tokens-test.lua
+--   VP_DISC1=<disc.cue> pcsx-redux -cli -dofile valkyrie-profile/tokens-test.lua
 --
 -- VP_TOKENS_RED=1 makes the encoder write the two arguments of special codes in
 -- reverse order, which must make the round trip fail on those strings.

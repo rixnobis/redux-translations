@@ -1,7 +1,7 @@
 -- Valkyrie Profile disc browser.
 --
 -- Load a Valkyrie Profile disc in the emulator, then run this script:
---   pcsx-redux -iso <disc.cue> -dofile examples/vp/browser.lua
+--   pcsx-redux -iso <disc.cue> -dofile valkyrie-profile/browser.lua
 -- or load it from the Lua console with Support.extra.dofile.
 --
 -- The tree is read straight from the loaded disc: nothing is extracted. SLZ
@@ -41,6 +41,12 @@ d 'base64.lua'
 d 'constants.lua'
 d 'filemap.lua'
 d 'font.lua'
+-- The retail font with its character names is game data: it ships in the
+-- release zip, never in the repository. tools/make-zip.sh copies it in.
+if not VP.readFile('font-database.lua') then
+    error('vp: font-database.lua is missing. It comes with the release zip; '
+        .. 'from a source tree, put a copy next to browser.lua.')
+end
 d 'font-database.lua'
 d 'languages.lua'
 d 'fontedit.lua'
@@ -71,10 +77,8 @@ d 'translate-web-glyphs.lua'
 d 'preview.lua'
 -- The GUI loads this resource at startup; without a GUI (-no-ui) it does not.
 if not (PCSX.FileViewers and PCSX.FileViewers.soundViewer) then
-    -- Found in a source tree; from the archive there is none, and sounds have no viewer.
-    if not pcall(Support.extra.dofile, VP.here .. '../../resources/fileviewers.lua') then
-        print('vp: no resources/fileviewers.lua next to this script, sound viewers disabled')
-    end
+    -- Without a GUI there is none, and images and sounds have no viewer.
+    print('vp: no PCSX.FileViewers (no GUI), image and sound viewers disabled')
 end
 d 'images.lua'
 d 'sounds.lua'

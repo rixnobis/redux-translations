@@ -2,8 +2,8 @@
 // driven over the DevTools protocol with nothing but Node (22 or later).
 //
 //   VP_EDITABLE_OUT=/tmp/editable.jsonl VP_DISC1=<disc.cue> \
-//       pcsx-redux -cli -dofile examples/vp/preview-test.lua
-//   node examples/vp/translate-web-test.mjs /tmp/editable.jsonl [shots-dir]
+//       pcsx-redux -cli -dofile valkyrie-profile/preview-test.lua
+//   node valkyrie-profile/translate-web-test.mjs /tmp/editable.jsonl [shots-dir]
 //
 // 1. Every string of the corpus, text -> chips -> text, comes back identical,
 //    and rendering that text again gives the same chips.

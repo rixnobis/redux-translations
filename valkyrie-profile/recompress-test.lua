@@ -5,7 +5,7 @@
 -- its destination buffer.
 --
 --   VP_DISC1=<disc.cue> pcsx-redux -cli -interpreter -bios <openbios.bin> \
---       -dofile examples/vp/recompress-test.lua
+--       -dofile valkyrie-profile/recompress-test.lua
 --
 -- The recompressed streams need not match the disc bytes; they only have to
 -- decode correctly in the game. Writes are checked two ways: the pages around

@@ -1,7 +1,7 @@
 -- Tests of the translation database (tdb.lua) and the editable text codec, on
 -- a temporary sqlite file. No disc is needed.
 --
---   pcsx-redux -cli -dofile examples/vp/tdb-test.lua
+--   pcsx-redux -cli -dofile valkyrie-profile/tdb-test.lua
 --
 -- Red arms: VP_TDB_RED=1 makes the sqlite backend skip its version check,
 -- which the conflict tests must catch; VP_TDB_RED=2 runs transactions without

@@ -1,7 +1,7 @@
 -- Tests of the web glyph editor (translate-web-glyphs.lua), calling its routes
 -- with requests built here, on a temporary database. No disc is needed.
 --
---   pcsx-redux -cli -dofile examples/vp/glyph-web-test.lua
+--   pcsx-redux -cli -dofile valkyrie-profile/glyph-web-test.lua
 --
 -- Red arm: VP_GLYPHWEB_RED=1 makes the save read the grid with x and y
 -- swapped, which the saved-bitmap check must catch.
